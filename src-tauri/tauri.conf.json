@@ -10,7 +10,6 @@
     "beforeBuildCommand": "npm run build"
   },
   "app": {
-    "title": "Business Cats — Host",
     "windows": [
       {
         "title": "Business Cats",

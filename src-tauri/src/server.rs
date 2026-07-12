@@ -5,10 +5,12 @@ use axum::{
     Json, Router,
 };
 use axum::extract::ws::{WebSocket, Message};
+use axum::serve;
 use futures_util::{SinkExt, StreamExt};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::Arc;
+use tokio::net::TcpListener;
 use tokio::sync::{RwLock, mpsc};
 use uuid::Uuid;
 
@@ -53,11 +55,13 @@ pub async fn start_server(state: SharedState, preferred_port: u16) {
     let mut port = preferred_port;
     loop {
         let addr = format!("0.0.0.0:{}", port);
-        match axum::Server::bind(&addr.parse().unwrap())
-            .serve(app.clone().into_make_service())
-            .await
-        {
-            Ok(_) => break,
+        match TcpListener::bind(&addr).await {
+            Ok(listener) => {
+                *state.server_port.write().await = port;
+                log::info!("Server running on port {}", port);
+                serve(listener, app.into_make_service()).await.unwrap();
+                break;
+            }
             Err(e) => {
                 log::warn!("Port {} busy: {}, trying {}", port, e, port + 1);
                 port += 1;
@@ -68,9 +72,6 @@ pub async fn start_server(state: SharedState, preferred_port: u16) {
             }
         }
     }
-
-    *state.server_port.write().await = port;
-    log::info!("Server running on port {}", port);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -132,11 +133,11 @@ async fn handle_socket(socket: WebSocket, query: WsQuery, state: SharedState) {
 
     // Cleanup
     if is_host {
-        if let Some(mut senders) = state.host_senders.write().await.get_mut(&pin) {
+        if let Some(_senders) = state.host_senders.write().await.get_mut(&pin) {
             // senders will be dropped when empty
         }
     } else {
-        if let Some(senders) = state.ws_senders.write().await.get_mut(&pin) {
+        if let Some(_senders) = state.ws_senders.write().await.get_mut(&pin) {
             // Notify host
             if let Some(hosts) = state.host_senders.read().await.get(&pin) {
                 for host_tx in hosts {

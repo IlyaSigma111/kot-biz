@@ -174,14 +174,14 @@ const MobileGame = observer(({ onDisconnect }: Props) => {
           { key: 'houses', label: '🏠 Дома', count: myHouses.length },
           { key: 'shop', label: '🛒 Магазин' },
           { key: 'trade', label: '🔄 Торговля' },
-        ] as const).map(item => (
+        ] as { readonly key: string; readonly label: string; readonly count?: number }[]).map(item => (
           <button
             key={item.key}
             style={{
               ...styles.tab,
               ...(tab === item.key ? styles.tabActive : {}),
             }}
-            onClick={() => setTab(item.key)}
+            onClick={() => setTab(item.key as typeof tab)}
           >
             {item.label}
             {item.count !== undefined && <span style={styles.tabCount}>{item.count}</span>}

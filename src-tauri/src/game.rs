@@ -127,7 +127,13 @@ pub struct TradeOffer {
 // GAME SESSION
 // ═══════════════════════════════════════════════════════════════
 
-#[derive(Debug, Clone)]
+pub fn generate_pin() -> String {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    format!("{:04}", rng.gen_range(0..10000u32))
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameSession {
     pub pin: String,
     pub phase: GamePhase,

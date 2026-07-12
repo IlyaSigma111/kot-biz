@@ -1,31 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { gameStore } from './store/gameStore';
 import HostLobby from './pages/HostLobby';
 import HostGame from './pages/HostGame';
 import MobileLobby from './pages/MobileLobby';
 import MobileGame from './pages/MobileGame';
+import './styles/themes.css';
 
-const App = observer(() => {
-  const [mode, setMode] = useState<'landing' | 'host' | 'mobile'>('landing');
-  const [mobileConnected, setMobileConnected] = useState(false);
+type StyleName = 'editorial' | 'midnight' | 'brutalist' | 'neon' | 'paper';
 
-  if (mode === 'host') {
-    if (gameStore.game?.phase === 'playing') {
-      return <HostGame onBack={() => { gameStore.disconnect(); setMode('landing'); }} />;
-    }
-    return <HostLobby onBack={() => { gameStore.disconnect(); setMode('landing'); }} />;
-  }
-
-  if (mode === 'mobile') {
-    if (gameStore.playerId && gameStore.game?.phase === 'playing') {
-      return <MobileGame onDisconnect={() => { gameStore.disconnect(); setMode('landing'); }} />;
-    }
-    return <MobileLobby onBack={() => setMode('landing')} />;
-  }
-
-  return <LandingPage onHost={() => setMode('host')} onJoin={() => setMode('mobile')} />;
-});
+const STYLES: { key: StyleName; label: string; swatch: string; desc: string }[] = [
+  { key: 'editorial', label: 'Editorial', swatch: '#000000', desc: 'Белый, классический' },
+  { key: 'midnight', label: 'Midnight', swatch: '#6366F1', desc: 'Тёмный, стекло' },
+  { key: 'brutalist', label: 'Brutalist', swatch: '#ff3300', desc: 'Грубый, без скруглений' },
+  { key: 'neon', label: 'Neon', swatch: '#00ff88', desc: 'Тёмный, неон' },
+  { key: 'paper', label: 'Paper', swatch: '#c05621', desc: 'Тёплый, бумажный' },
+];
 
 const FEATURES = [
   { icon: '🐱', title: '8 пород котов', desc: 'Чёрные, серые, белые, рыжие — самцы и самки' },
@@ -38,278 +28,188 @@ const FEATURES = [
 
 const HOW_TO_PLAY = [
   { step: '1', title: 'Создайте игру', desc: 'На смартборде нажмите "Хост". Появится QR-код' },
-  { step: '2', title: 'Подключите игроков', desc: 'Студенты сканируют QR и вводят имя + PIN' },
+  { step: '2', title: 'Подключите игроков', desc: 'Студенты сканируют QR и вводят имя' },
   { step: '3', title: 'Играйте!', desc: 'Покупайте котов, стройте дома, торгуйте друг с другом' },
   { step: '4', title: 'Побеждает богатейший', desc: 'Кто накопит больше монет к концу сезона — тот выиграл' },
 ];
 
-const LandingPage = observer(({ onHost, onJoin }: { onHost: () => void; onJoin: () => void }) => {
+const App = observer(() => {
+  const [mode, setMode] = useState<'landing' | 'host' | 'mobile'>('landing');
+  const [mobileConnected, setMobileConnected] = useState(false);
+  const [currentStyle, setCurrentStyle] = useState<StyleName>('midnight');
+  const [showSettings, setShowSettings] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-style', currentStyle === 'editorial' ? '' : currentStyle);
+  }, [currentStyle]);
+
+  if (mode === 'host') {
+    if (gameStore.game?.phase === 'playing') {
+      return <HostGame onBack={() => { gameStore.disconnect(); setMode('landing'); }} />;
+    }
+    return (
+      <HostLobby
+        onBack={() => { gameStore.disconnect(); setMode('landing'); }}
+        currentStyle={currentStyle}
+        onStyleChange={setCurrentStyle}
+        showSettings={showSettings}
+        onToggleSettings={() => setShowSettings(!showSettings)}
+        styles={STYLES}
+      />
+    );
+  }
+
+  if (mode === 'mobile') {
+    if (gameStore.playerId && gameStore.game?.phase === 'playing') {
+      return <MobileGame onDisconnect={() => { gameStore.disconnect(); setMode('landing'); }} />;
+    }
+    return <MobileLobby onBack={() => setMode('landing')} />;
+  }
+
   return (
-    <div style={styles.page}>
+    <LandingPage
+      onHost={() => setMode('host')}
+      onJoin={() => setMode('mobile')}
+      currentStyle={currentStyle}
+      onStyleChange={setCurrentStyle}
+      styles={STYLES}
+    />
+  );
+});
+
+const LandingPage = observer(({
+  onHost, onJoin, currentStyle, onStyleChange, styles
+}: {
+  onHost: () => void;
+  onJoin: () => void;
+  currentStyle: StyleName;
+  onStyleChange: (s: StyleName) => void;
+  styles: typeof STYLES;
+}) => {
+  return (
+    <div className="app-shell">
+      {/* Style Label */}
+      <div style={{ position: 'fixed', top: 20, right: 24, zIndex: 200 }}>
+        <span className="style-label">{styles.find(s => s.key === currentStyle)?.label}</span>
+      </div>
+
       {/* Hero */}
-      <header style={styles.hero}>
-        <div style={styles.heroBg} />
-        <div style={styles.heroContent}>
-          <div style={styles.heroEmoji}>🐱💼</div>
-          <h1 style={styles.heroTitle}>Business Cats</h1>
-          <p style={styles.heroSubtitle}>
-            Мультиплеерная экономическая игра для класса.
-            <br />
-            Коты, деньги, торговля и стратегия.
-          </p>
-          <div style={styles.heroButtons}>
-            <button style={styles.hostBtn} onClick={onHost}>
-              🖥️ Запустить на смартборде
-            </button>
-            <button style={styles.joinBtn} onClick={onJoin}>
-              📱 Присоединиться с телефона
-            </button>
-          </div>
-          <p style={styles.heroHint}>
-            Нужно одно устройство в качестве сервера + телефоны студентов
-          </p>
+      <section style={{ textAlign: 'center', padding: '80px 24px 40px' }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          fontSize: 12, fontWeight: 600, letterSpacing: '.06em',
+          textTransform: 'uppercase', color: 'var(--text-muted)',
+          padding: '6px 14px', borderRadius: 'var(--radius-tag)',
+          background: 'var(--tag-bg)', marginBottom: 24,
+        }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)' }} />
+          Business Cats
         </div>
-      </header>
+        <h1 style={{
+          fontFamily: 'var(--font-display)', fontSize: 'clamp(36px,6vw,64px)',
+          fontWeight: 700, lineHeight: 1.08, letterSpacing: '-.03em', marginBottom: 20,
+        }}>
+          Мультиплеерная<br />экономическая игра
+        </h1>
+        <p style={{
+          fontSize: 'clamp(16px,2vw,20px)', color: 'var(--text-secondary)',
+          maxWidth: 580, margin: '0 auto 36px', lineHeight: 1.6,
+        }}>
+          Коты, деньги, торговля и стратегия. Учитель запускает .exe — класс подключается по QR-коду.
+        </p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button className="btn btn-primary" onClick={onHost} style={{ padding: '14px 32px', fontSize: 16 }}>
+            🖥️ Запустить на смартборде
+          </button>
+          <button className="btn btn-secondary" onClick={onJoin} style={{ padding: '14px 32px', fontSize: 16 }}>
+            📱 Присоединиться
+          </button>
+        </div>
+        <div style={{
+          display: 'flex', gap: 36, marginTop: 48, justifyContent: 'center', flexWrap: 'wrap',
+        }}>
+          {['Один .exe', 'QR-код', 'Мгновенный старт', 'Локальная сеть'].map(s => (
+            <span key={s} style={{ fontSize: 13, color: 'var(--text-muted)' }}>{s}</span>
+          ))}
+        </div>
+      </section>
+
+      {/* How to Play */}
+      <section style={{ padding: '60px 0' }}>
+        <h2 style={{
+          fontFamily: 'var(--font-display)', fontSize: 'var(--heading-size)',
+          fontWeight: 700, letterSpacing: '-.02em', marginBottom: 8, textAlign: 'center',
+        }}>Как играть</h2>
+        <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 40 }}>
+          От запуска до первой сделки — меньше минуты
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--gap)' }}>
+          {HOW_TO_PLAY.map(s => (
+            <div key={s.step} className="card-section" style={{ textAlign: 'center' }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: '50%',
+                background: 'var(--tag-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 16px', fontSize: 18, fontWeight: 700, color: 'var(--accent)',
+              }}>{s.step}</div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>{s.title}</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.5 }}>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Features */}
-      <section style={styles.section}>
-        <h2 style={styles.sectionTitle}>Возможности</h2>
-        <div style={styles.featuresGrid}>
-          {FEATURES.map((f, i) => (
-            <div key={i} style={styles.featureCard}>
-              <div style={styles.featureIcon}>{f.icon}</div>
-              <h3 style={styles.featureTitle}>{f.title}</h3>
-              <p style={styles.featureDesc}>{f.desc}</p>
+      <section style={{ padding: '60px 0' }}>
+        <h2 style={{
+          fontFamily: 'var(--font-display)', fontSize: 'var(--heading-size)',
+          fontWeight: 700, letterSpacing: '-.02em', marginBottom: 8, textAlign: 'center',
+        }}>Возможности</h2>
+        <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 40 }}>
+          Всё для экономической игры в классе
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 'var(--gap)' }}>
+          {FEATURES.map(f => (
+            <div key={f.title} className="card-section">
+              <div style={{ fontSize: 32, marginBottom: 12 }}>{f.icon}</div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{f.title}</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.5 }}>{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* How to play */}
-      <section style={{ ...styles.section, background: '#0f0f23' }}>
-        <h2 style={styles.sectionTitle}>Как играть</h2>
-        <div style={styles.stepsGrid}>
-          {HOW_TO_PLAY.map((s, i) => (
-            <div key={i} style={styles.stepCard}>
-              <div style={styles.stepNumber}>{s.step}</div>
-              <h3 style={styles.stepTitle}>{s.title}</h3>
-              <p style={styles.stepDesc}>{s.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Tech stack */}
-      <section style={styles.section}>
-        <h2 style={styles.sectionTitle}>Технологии</h2>
-        <div style={styles.techGrid}>
-          {[
-            { icon: '🦀', name: 'Rust + Tauri', desc: 'Десктоп-сервер' },
-            { icon: '⚛️', name: 'React + TypeScript', desc: 'Веб-интерфейс' },
-            { icon: '🔌', name: 'WebSocket', desc: 'Реалтайм-связь' },
-            { icon: '💾', name: 'SQLite', desc: 'Хранение данных' },
-          ].map((t, i) => (
-            <div key={i} style={styles.techCard}>
-              <div style={styles.techIcon}>{t.icon}</div>
-              <div style={styles.techName}>{t.name}</div>
-              <div style={styles.techDesc}>{t.desc}</div>
-            </div>
+      {/* Style Picker (footer) */}
+      <section style={{ padding: '40px 0', textAlign: 'center' }}>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, fontFamily: 'var(--font-mono)', letterSpacing: '.05em', textTransform: 'uppercase' }}>
+          Стиль интерфейса
+        </p>
+        <div className="style-picker" style={{ display: 'inline-flex' }}>
+          {styles.map(s => (
+            <button
+              key={s.key}
+              className={currentStyle === s.key ? 'active' : ''}
+              onClick={() => onStyleChange(s.key)}
+            >
+              {s.label}
+            </button>
           ))}
         </div>
       </section>
 
       {/* Footer */}
-      <footer style={styles.footer}>
-        <p>Business Cats — Educational Game</p>
-        <p style={styles.footerSmall}>Локальная сеть • Мультиплеер • До 10+ игроков</p>
+      <footer style={{
+        padding: '40px 0', borderTop: '1px solid var(--border)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12,
+        fontSize: 12, color: 'var(--text-muted)',
+      }}>
+        <div>🐱💼 Business Cats — мультиплеерная экономическая игра</div>
+        <div style={{ display: 'flex', gap: 16 }}>
+          <a href="https://github.com/IlyaSigma111/kot-biz" style={{ color: 'var(--text-muted)' }}>GitHub</a>
+          <a href="https://github.com/IlyaSigma111/kot-biz/issues" style={{ color: 'var(--text-muted)' }}>Обратная связь</a>
+        </div>
       </footer>
     </div>
   );
 });
-
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: '100vh',
-    background: '#0a0a1a',
-    color: '#eee',
-  },
-  hero: {
-    position: 'relative',
-    padding: '80px 24px 60px',
-    textAlign: 'center',
-    overflow: 'hidden',
-  },
-  heroBg: {
-    position: 'absolute',
-    inset: 0,
-    background: 'linear-gradient(135deg, #1a1a3e 0%, #0a0a1a 50%, #1a0a2e 100%)',
-    zIndex: 0,
-  },
-  heroContent: {
-    position: 'relative',
-    zIndex: 1,
-    maxWidth: '700px',
-    margin: '0 auto',
-  },
-  heroEmoji: {
-    fontSize: '72px',
-    marginBottom: '16px',
-  },
-  heroTitle: {
-    fontSize: '56px',
-    fontWeight: 900,
-    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #feca57 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    marginBottom: '16px',
-    lineHeight: 1.1,
-  },
-  heroSubtitle: {
-    fontSize: '18px',
-    color: '#aaa',
-    lineHeight: 1.6,
-    marginBottom: '32px',
-  },
-  heroButtons: {
-    display: 'flex',
-    gap: '16px',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    marginBottom: '20px',
-  },
-  hostBtn: {
-    padding: '16px 32px',
-    fontSize: '16px',
-    fontWeight: 700,
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
-    border: 'none',
-    borderRadius: '14px',
-    cursor: 'pointer',
-    transition: 'transform 0.2s',
-  },
-  joinBtn: {
-    padding: '16px 32px',
-    fontSize: '16px',
-    fontWeight: 700,
-    background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    color: '#0a0a1a',
-    border: 'none',
-    borderRadius: '14px',
-    cursor: 'pointer',
-    transition: 'transform 0.2s',
-  },
-  heroHint: {
-    fontSize: '13px',
-    color: '#555',
-  },
-  section: {
-    padding: '60px 24px',
-    maxWidth: '900px',
-    margin: '0 auto',
-  },
-  sectionTitle: {
-    fontSize: '28px',
-    fontWeight: 800,
-    textAlign: 'center',
-    marginBottom: '40px',
-    color: '#eee',
-  },
-  featuresGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-    gap: '20px',
-  },
-  featureCard: {
-    background: '#16213e',
-    borderRadius: '16px',
-    padding: '24px',
-    textAlign: 'center',
-  },
-  featureIcon: {
-    fontSize: '40px',
-    marginBottom: '12px',
-  },
-  featureTitle: {
-    fontSize: '16px',
-    fontWeight: 700,
-    marginBottom: '8px',
-    color: '#eee',
-  },
-  featureDesc: {
-    fontSize: '13px',
-    color: '#888',
-    lineHeight: 1.5,
-  },
-  stepsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-    gap: '20px',
-  },
-  stepCard: {
-    textAlign: 'center',
-    padding: '20px',
-  },
-  stepNumber: {
-    width: '48px',
-    height: '48px',
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '20px',
-    fontWeight: 800,
-    color: 'white',
-    margin: '0 auto 16px',
-  },
-  stepTitle: {
-    fontSize: '15px',
-    fontWeight: 700,
-    marginBottom: '8px',
-    color: '#eee',
-  },
-  stepDesc: {
-    fontSize: '13px',
-    color: '#888',
-    lineHeight: 1.5,
-  },
-  techGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-    gap: '16px',
-  },
-  techCard: {
-    background: '#16213e',
-    borderRadius: '12px',
-    padding: '20px',
-    textAlign: 'center',
-  },
-  techIcon: {
-    fontSize: '32px',
-    marginBottom: '8px',
-  },
-  techName: {
-    fontSize: '14px',
-    fontWeight: 700,
-    marginBottom: '4px',
-  },
-  techDesc: {
-    fontSize: '12px',
-    color: '#666',
-  },
-  footer: {
-    padding: '40px 24px',
-    textAlign: 'center',
-    borderTop: '1px solid #222',
-    color: '#555',
-    fontSize: '14px',
-  },
-  footerSmall: {
-    fontSize: '12px',
-    color: '#333',
-    marginTop: '8px',
-  },
-};
 
 export default App;

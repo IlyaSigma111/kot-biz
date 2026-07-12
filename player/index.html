@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Business Cats</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, sans-serif; background: #0a0a1a; color: #eee; min-height: 100vh; }
+
+    .screen { display: none; min-height: 100vh; padding: 16px; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+    /* JOIN */
+    .join-card { background: #16213e; border-radius: 20px; padding: 32px 24px; width: 100%; max-width: 360px; text-align: center; }
+    .join-title { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+    .join-sub { color: #666; font-size: 13px; margin-bottom: 24px; }
+    .field { margin-bottom: 16px; text-align: left; }
+    .field label { display: block; font-size: 12px; color: #666; margin-bottom: 6px; font-weight: 600; }
+    .field input { width: 100%; padding: 12px 14px; background: #0f3460; border: 1px solid #333; border-radius: 10px; color: white; font-size: 16px; outline: none; }
+    .field input::placeholder { color: #444; }
+    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; font-family: inherit; }
+    .btn-join { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #0a0a1a; }
+    .btn:disabled { opacity: 0.4; }
+    .error { background: #ff444422; border: 1px solid #ff4444; border-radius: 8px; padding: 8px; color: #ff6666; font-size: 13px; margin-bottom: 12px; display: none; }
+
+    /* GAME */
+    .game-top { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 0; border-bottom: 1px solid #222; margin-bottom: 12px; }
+    .g-name { font-weight: 700; font-size: 14px; }
+    .g-role { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #4CAF50; color: white; }
+    .g-balance { font-family: monospace; font-weight: 700; color: #4CAF50; font-size: 14px; }
+    .g-season { font-size: 11px; padding: 3px 10px; border-radius: 10px; background: #FF9800; color: white; }
+
+    .game-content { flex: 1; width: 100%; overflow: auto; }
+    .section { background: #16213e; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+    .section-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+
+    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .cat-card { background: #0f3460; border: 2px solid #333; border-radius: 10px; padding: 12px; text-align: center; }
+    .cat-card.sick { border-color: #ff4444; }
+    .cat-card.hungry { border-color: #ff9800; }
+    .cat-emoji { font-size: 28px; }
+    .cat-name { font-size: 12px; font-weight: 600; margin: 4px 0; }
+    .cat-price { font-size: 11px; color: #4CAF50; font-family: monospace; }
+    .cat-actions { display: flex; gap: 4px; margin-top: 8px; }
+    .cat-btn { flex: 1; padding: 6px; font-size: 10px; border: 1px solid #444; border-radius: 6px; background: transparent; color: #aaa; cursor: pointer; }
+    .cat-btn.feed { border-color: #4CAF50; color: #4CAF50; }
+    .cat-btn.treat { border-color: #ff9800; color: #ff9800; }
+    .cat-btn.sell { border-color: #f5576c; color: #f5576c; }
+
+    .house-card { background: #0f3460; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+    .house-header { font-size: 12px; color: #888; margin-bottom: 6px; }
+    .house-cats { display: flex; gap: 4px; flex-wrap: wrap; }
+
+    .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .shop-btn { padding: 10px; background: #0f3460; border: 1px solid #333; border-radius: 8px; color: white; font-size: 12px; cursor: pointer; text-align: center; }
+    .shop-btn:active { background: #1a4a7a; }
+
+    .tab-bar { display: flex; border-top: 1px solid #222; margin-top: auto; }
+    .tab { flex: 1; padding: 10px; text-align: center; font-size: 11px; color: #555; background: transparent; border: none; cursor: pointer; }
+    .tab.active { color: #43e97b; border-bottom: 2px solid #43e97b; }
+  </style>
+</head>
+<body>
+
+  <!-- JOIN SCREEN -->
+  <div id="join-screen" class="screen active">
+    <div class="join-card">
+      <div class="join-title">🐱💼 Business Cats</div>
+      <div class="join-sub">Введите имя для подключения</div>
+      <div id="error" class="error"></div>
+      <div class="field">
+        <label>Ваше имя</label>
+        <input id="name-input" placeholder="Введите имя" maxlength="20">
+      </div>
+      <button id="join-btn" class="btn btn-join" disabled>Присоединиться</button>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen" class="screen">
+    <div class="game-top">
+      <div>
+        <div class="g-name" id="g-name">Игрок</div>
+        <span class="g-role" id="g-role">Питомник</span>
+      </div>
+      <div class="g-season" id="g-season">Лето #1</div>
+      <div class="g-balance" id="g-balance">💰 70</div>
+    </div>
+
+    <div class="game-content" id="game-content"></div>
+
+    <div class="tab-bar">
+      <button class="tab active" data-tab="cats">🐱 Коты</button>
+      <button class="tab" data-tab="houses">🏠 Дома</button>
+      <button class="tab" data-tab="shop">🛒 Магазин</button>
+      <button class="tab" data-tab="trade">🔄 Торг</button>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════════════
+    let ws = null;
+    let playerId = null;
+    let gameState = null;
+    let currentTab = 'cats';
+    let serverUrl = '';
+
+    const COLORS = { black: 'Чёрный', gray: 'Серый', white: 'Белый', ginger: 'Рыжий' };
+    const GENDERS = { male: '♂', female: '♀' };
+    const PRICES = { black: [6,7], gray: [8,10], white: [10,11], ginger: [7,8] };
+    const SEASONS = { summer: 'Лето', fall: 'Осень', winter: 'Зима', spring: 'Весна' };
+
+    // ═══════════════════════════════════════════════════════════
+    // JOIN
+    // ═══════════════════════════════════════════════════════════
+    const nameInput = document.getElementById('name-input');
+    const joinBtn = document.getElementById('join-btn');
+    const errorDiv = document.getElementById('error');
+
+    // Auto-detect server
+    const params = new URLSearchParams(location.search);
+    serverUrl = params.get('server') || `ws://${location.hostname || '127.0.0.1'}:9001`;
+
+    nameInput.addEventListener('input', () => {
+      joinBtn.disabled = nameInput.value.trim().length < 1;
+    });
+
+    joinBtn.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      if (!name) return;
+      connect(name);
+    });
+
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && nameInput.value.trim()) connect(nameInput.value.trim());
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // WEBSOCKET
+    // ═══════════════════════════════════════════════════════════
+    function connect(name) {
+      ws = new WebSocket(`${serverUrl}/ws?pin=default&host=0`);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ type: 'join', name }));
+      };
+
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+        handleMessage(msg);
+      };
+
+      ws.onclose = () => {
+        errorDiv.textContent = 'Соединение потеряно';
+        errorDiv.style.display = 'block';
+        setTimeout(() => { errorDiv.style.display = 'none'; }, 3000);
+      };
+    }
+
+    function handleMessage(msg) {
+      switch (msg.type) {
+        case 'joined':
+          playerId = msg.player_id;
+          document.getElementById('g-role').textContent = msg.role === 'nursery' ? 'Питомник' : 'Магазин';
+          showScreen('game');
+          break;
+
+        case 'game_state':
+          gameState = msg.session;
+          render();
+          break;
+
+        case 'balance':
+          document.getElementById('g-balance').textContent = `💰 ${msg.balance}`;
+          if (gameState) {
+            const p = gameState.players.find(p => p.id === playerId);
+            if (p) p.balance = msg.balance;
+          }
+          break;
+
+        case 'cat_bought':
+          if (gameState) {
+            const cat = msg.cat;
+            gameState.cats = gameState.cats || [];
+            gameState.cats.push(cat);
+          }
+          render();
+          break;
+
+        case 'cat_sold':
+          if (gameState) {
+            gameState.cats = gameState.cats.filter(c => c.id !== msg.cat_id);
+          }
+          render();
+          break;
+
+        case 'error':
+          errorDiv.textContent = msg.message;
+          errorDiv.style.display = 'block';
+          setTimeout(() => { errorDiv.style.display = 'none'; }, 3000);
+          break;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // RENDER
+    // ═══════════════════════════════════════════════════════════
+    function render() {
+      if (!gameState) return;
+
+      const myCats = (gameState.cats || []).filter(c => c.owner_id === playerId);
+      const myHouses = (gameState.houses || []).filter(h => h.owner_id === playerId);
+
+      document.getElementById('g-name').textContent = gameState.players?.find(p => p.id === playerId)?.name || 'Игрок';
+      document.getElementById('g-season').textContent = `${gameState.current_season || 'Лето'} #${gameState.current_turn || 1}`;
+
+      const content = document.getElementById('game-content');
+
+      if (currentTab === 'cats') {
+        content.innerHTML = `<div class="section"><div class="section-title">Мои коты (${myCats.length})</div>
+          <div class="cat-grid">${myCats.map(cat => catHTML(cat)).join('')}</div>
+          ${myCats.length === 0 ? '<div style="color:#555;text-align:center;padding:20px">Нет котов</div>' : ''}
+        </div>`;
+      } else if (currentTab === 'houses') {
+        content.innerHTML = `<div class="section"><div class="section-title">Дома (${myHouses.length})</div>
+          <button class="btn" style="background:#667eea;color:white;margin-bottom:12px" onclick="buyHouse()">Купить дом (💰 15)</button>
+          ${myHouses.map(h => `<div class="house-card"><div class="house-header">Дом (${h.cat_ids?.length || 0}/4)${h.is_insured ? ' 🔒' : ''}</div></div>`).join('')}
+          ${myHouses.length === 0 ? '<div style="color:#555;text-align:center">Нет домов</div>' : ''}
+        </div>`;
+      } else if (currentTab === 'shop') {
+        let shopHTML = '<div class="section"><div class="section-title">Купить кота</div><div class="shop-grid">';
+        for (const [color, prices] of Object.entries(PRICES)) {
+          shopHTML += `<button class="shop-btn" onclick="buyCat('${color}','male')">${COLORS[color]} ♂<br>💰 ${prices[0]}</button>`;
+          shopHTML += `<button class="shop-btn" onclick="buyCat('${color}','female')">${COLORS[color]} ♀<br>💰 ${prices[1]}</button>`;
+        }
+        shopHTML += '</div></div>';
+
+        shopHTML += '<div class="section"><div class="section-title">Продать в город (💰 22)</div>';
+        myCats.forEach(cat => {
+          shopHTML += `<button class="cat-btn sell" style="width:100%;margin-bottom:6px;padding:10px" onclick="sellToCity('${cat.id}')">${COLORS[cat.color]} ${GENDERS[cat.gender]}</button>`;
+        });
+        shopHTML += '</div>';
+
+        content.innerHTML = shopHTML;
+      } else if (currentTab === 'trade') {
+        content.innerHTML = '<div class="section"><div class="section-title">Торговля</div><div style="color:#555;text-align:center">Обмен между игроками</div></div>';
+      }
+    }
+
+    function catHTML(cat) {
+      const cls = cat.sickness ? 'sick' : cat.is_hungry ? 'hungry' : '';
+      return `<div class="cat-card ${cls}">
+        <div class="cat-emoji">${cat.gender === 'male' ? '🐈‍⬛' : '🐱'}</div>
+        <div class="cat-name">${COLORS[cat.color]} ${GENDERS[cat.gender]}</div>
+        <div class="cat-price">💰 ${cat.price} • ${cat.age_months} мес</div>
+        <div class="cat-actions">
+          ${cat.is_hungry ? `<button class="cat-btn feed" onclick="feedCat('${cat.id}')">🍖 Кормить</button>` : ''}
+          ${cat.sickness ? `<button class="cat-btn treat" onclick="treatCat('${cat.id}')">💊 Лечить</button>` : ''}
+          <button class="cat-btn sell" onclick="sellToCity('${cat.id}')">💸 Продать</button>
+        </div>
+      </div>`;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ACTIONS
+    // ═══════════════════════════════════════════════════════════
+    function send(msg) { if (ws?.readyState === 1) ws.send(JSON.stringify(msg)); }
+    function feedCat(id) { send({ type: 'feed', cat_id: id }); }
+    function treatCat(id) { send({ type: 'treat', cat_id: id }); }
+    function sellToCity(id) { send({ type: 'sell_to_city', cat_id: id }); }
+    function buyHouse() { send({ type: 'buy_house' }); }
+    function buyCat(color, gender) { send({ type: 'buy_cat', color, gender }); }
+
+    // ═══════════════════════════════════════════════════════════
+    // TABS
+    // ═══════════════════════════════════════════════════════════
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentTab = tab.dataset.tab;
+        render();
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // SCREENS
+    // ═══════════════════════════════════════════════════════════
+    function showScreen(name) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(`${name}-screen`).classList.add('active');
+    }
+  </script>
+</body>
+</html>

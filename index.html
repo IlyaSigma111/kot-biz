@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Business Cats — Мультиплеерная игра для класса</title>
+  <meta name="description" content="Экономическая мультиплеерная игра с котами. Питомники, магазины, торговля. До 10+ игроков по WiFi." />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a1a;
+      color: #eee;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      position: relative;
+      padding: 100px 24px 80px;
+      text-align: center;
+      overflow: hidden;
+      background: linear-gradient(135deg, #1a1a3e 0%, #0a0a1a 50%, #1a0a2e 100%);
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(240,147,251,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-emoji { font-size: 80px; margin-bottom: 20px; }
+    .hero-title {
+      font-size: clamp(40px, 8vw, 64px);
+      font-weight: 900;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #feca57 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+    .hero-subtitle {
+      font-size: 18px;
+      color: #aaa;
+      line-height: 1.7;
+      max-width: 550px;
+      margin: 0 auto 36px;
+    }
+    .hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 24px; }
+    .btn-host, .btn-join {
+      padding: 16px 36px;
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+    .btn-host:hover, .btn-join:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .btn-host { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    .btn-join { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #0a0a1a; }
+    .hero-hint { font-size: 13px; color: #444; }
+
+    /* ===== FEATURES ===== */
+    .section { padding: 70px 24px; max-width: 960px; margin: 0 auto; }
+    .section-alt { background: #0f0f23; }
+    .section-title {
+      font-size: 28px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 44px;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: #16213e;
+      border-radius: 16px;
+      padding: 28px;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+    .feature-card:hover { transform: translateY(-4px); }
+    .feature-icon { font-size: 42px; margin-bottom: 14px; }
+    .feature-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .feature-desc { font-size: 13px; color: #777; line-height: 1.6; }
+
+    /* ===== HOW TO PLAY ===== */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 24px;
+    }
+    .step-card { text-align: center; padding: 24px 16px; }
+    .step-number {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 800; color: white;
+      margin: 0 auto 18px;
+    }
+    .step-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .step-desc { font-size: 13px; color: #777; line-height: 1.6; }
+
+    /* ===== TECH STACK ===== */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 16px;
+    }
+    .tech-card {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+    .tech-icon { font-size: 36px; margin-bottom: 10px; }
+    .tech-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .tech-desc { font-size: 12px; color: #555; }
+
+    /* ===== RULES ===== */
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .rule-card {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .rule-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; color: #f093fb; }
+    .rule-list { list-style: none; padding: 0; }
+    .rule-list li {
+      font-size: 13px;
+      color: #999;
+      padding: 4px 0;
+      border-bottom: 1px solid #1a1a3e;
+    }
+    .rule-list li:last-child { border: none; }
+    .rule-list li strong { color: #eee; }
+
+    /* ===== CATS TABLE ===== */
+    .cats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .cats-table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: #16213e;
+      color: #aaa;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cats-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #1a1a3e;
+      color: #ccc;
+    }
+    .cats-table tr:hover td { background: #0f0f23; }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      padding: 48px 24px;
+      text-align: center;
+      border-top: 1px solid #1a1a3e;
+      color: #444;
+      font-size: 14px;
+    }
+    .footer-small { font-size: 12px; color: #2a2a3e; margin-top: 8px; }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    .hero-emoji { animation: float 3s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-emoji">🐱💼</div>
+    <h1 class="hero-title">Business Cats</h1>
+    <p class="hero-subtitle">
+      Мультиплеерная экономическая игра для класса.<br>
+      Коты, деньги, питомники, магазины и торговля — всё по WiFi.
+    </p>
+    <div class="hero-buttons">
+      <button class="btn-host" onclick="alert('Запустите Tauri-приложение на смартборде')">🖥️ Запустить на смартборде</button>
+      <button class="btn-join" onclick="alert('Откройте приложение на телефоне и введите адрес сервера')">📱 Присоединиться</button>
+    </div>
+    <p class="hero-hint">Нужно одно устройство в качестве сервера + телефоны студентов в одной WiFi-сети</p>
+  </header>
+
+  <!-- FEATURES -->
+  <section class="section">
+    <h2 class="section-title">Возможности</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🐱</div>
+        <h3 class="feature-title">8 пород котов</h3>
+        <p class="feature-desc">Чёрные, серые, белые, рыжие — самцы и самки. У каждой своя цена и уникальные характеристики</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏠</div>
+        <h3 class="feature-title">Питомники и магазины</h3>
+        <p class="feature-desc">Питомники разводят котов, магазины продают их клиентам. Каждая роль — своя стратегия</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <h3 class="feature-title">Экономика и кредиты</h3>
+        <p class="feature-desc">Начальный капитал 70 монет. Кредиты под 5/10/15%, банковские гарантии, штрафы</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🍂</div>
+        <h3 class="feature-title">4 сезона</h3>
+        <p class="feature-desc">Лето, осень, зима, весна. Длительность хода от 5 до 15 минут. Сезоны влияют на цены</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏥</div>
+        <h3 class="feature-title">Болезни и лечение</h3>
+        <p class="feature-desc">Блохи (2💰), отравление (5💰), лишай (4💰), перелом (8💰). Лечите вовремя!</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <h3 class="feature-title">Мультиплеер 10+</h3>
+        <p class="feature-desc">До 10+ игроков одновременно. QR-код для подключения, Name + PIN авторизация</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW TO PLAY -->
+  <section class="section section-alt">
+    <h2 class="section-title">Как играть</h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number">1</div>
+        <h3 class="step-title">Создайте игру</h3>
+        <p class="step-desc">На смартборде или ноутбуке запустите Tauri-приложение и нажмите "Хост"</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">2</div>
+        <h3 class="step-title">Подключите игроков</h3>
+        <p class="step-desc">Появится QR-код. Студенты сканируют его телефонами и вводят имя + PIN</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">3</div>
+        <h3 class="step-title">Играйте!</h3>
+        <p class="step-desc">Покупайте котов, стройте дома, кормите, лечите, торгуйте друг с другом</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">4</div>
+        <h3 class="step-title">Побеждает богатейший</h3>
+        <p class="step-desc">Кто накопит больше монет к концу последнего сезона — тот выиграл</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- RULES -->
+  <section class="section">
+    <h2 class="section-title">Правила</h2>
+    <div class="rules-grid">
+      <div class="rule-card">
+        <h3 class="rule-title">🐱 Коты</h3>
+        <ul class="rule-list">
+          <li>4 цвета × 2 пола = <strong>8 комбинаций</strong></li>
+          <li>Цена покупки: от <strong>6 до 11 монет</strong></li>
+          <li>Продажа в город: <strong>22 монеты</strong></li>
+          <li>Коты могут <strong>голодать</strong> и <strong>болеть</strong></li>
+          <li>Беременность самки: <strong>1 месяц</strong></li>
+        </ul>
+      </div>
+      <div class="rule-card">
+        <h3 class="rule-title">🏠 Дома</h3>
+        <ul class="rule-list">
+          <li>Вместимость: <strong>4 кота</strong></li>
+          <li>Стоимость: <strong>15 монет</strong></li>
+          <li>Без дома коты <strong>уходят</strong></li>
+          <li>Страховка: защита от <strong>болезней</strong></li>
+          <li>Питомники: <strong>2 дома</strong>, Магазины: <strong>2 дома</strong></li>
+        </ul>
+      </div>
+      <div class="rule-card">
+        <h3 class="rule-title">💰 Экономика</h3>
+        <ul class="rule-list">
+          <li>Начальный капитал: <strong>70 монет</strong></li>
+          <li>Кредиты: <strong>5/10/15%</strong> ставка</li>
+          <li>Макс. кредит: <strong>80 монет</strong></li>
+          <li>Банковская гарантия: <strong>100 монет</strong></li>
+          <li>Макс. штраф: <strong>120 монет</strong></li>
+        </ul>
+      </div>
+      <div class="rule-card">
+        <h3 class="rule-title">🔄 Торговля</h3>
+        <ul class="rule-list">
+          <li>Обмен котами <strong>между игроками</strong></li>
+          <li>Создание предложений с <strong>ценой</strong></li>
+          <li>Подтверждение или <strong>отклонение</strong></li>
+          <li>Продажа в город: <strong>22 монеты</strong></li>
+          <li>Роль <strong>влияет</strong> на доступные действия</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAT PRICES TABLE -->
+  <section class="section section-alt">
+    <h2 class="section-title">Цены котов</h2>
+    <table class="cats-table">
+      <thead>
+        <tr>
+          <th>Цвет</th>
+          <th>Самец ♂</th>
+          <th>Самка ♀</th>
+          <th>Продажа в город</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>⬛ Чёрный</td><td>6 💰</td><td>7 💰</td><td>22 💰</td></tr>
+        <tr><td>🩶 Серый</td><td>8 💰</td><td>10 💰</td><td>22 💰</td></tr>
+        <tr><td>⬜ Белый</td><td>10 💰</td><td>11 💰</td><td>22 💰</td></tr>
+        <tr><td>🟧 Рыжий</td><td>7 💰</td><td>8 💰</td><td>22 💰</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- TECH STACK -->
+  <section class="section">
+    <h2 class="section-title">Технологии</h2>
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="tech-icon">🦀</div>
+        <div class="tech-name">Rust + Tauri 2.0</div>
+        <div class="tech-desc">Десктоп-сервер с встроенной логикой</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-icon">⚛️</div>
+        <div class="tech-name">React + TypeScript</div>
+        <div class="tech-desc">Адаптивный веб-интерфейс</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-icon">🔌</div>
+        <div class="tech-name">WebSocket</div>
+        <div class="tech-desc">Реалтайм-связь сервера с клиентами</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-icon">💾</div>
+        <div class="tech-name">SQLite</div>
+        <div class="tech-desc">Хранение состояния игры</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>Business Cats — Educational Multiplayer Game</p>
+    <p class="footer-small">Локальная сеть • Мультиплеер • До 10+ игроков • Rust + React</p>
+  </footer>
+
+</body>
+</html>
